@@ -31,7 +31,7 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
     ```
 
 4. U istom direktoriju (`chat-at-fesb/`) pokrenite klijentsku _chat_ aplikaciju i pokušajte se povezati sa serverom na lokalnom računalu.  
-**NAPOMENA:** U klijentu nije nužno unositi adresu ni broj porta ako je server pokrenut na lokalnom računalu i sluša na zadanom portu.
+**NAPOMENA:** U klijentu nije nužno unositi adresu servera ni broj porta ako je server pokrenut na lokalnom računalu i sluša na zadanom portu.
     ```
     npm start
     ```
