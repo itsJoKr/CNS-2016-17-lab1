@@ -1,10 +1,9 @@
 var crypto = require('crypto'),
     date = new Date(),
-    params =  {usernameLength: 5}; // Default username length.
+    params =  {usernameLength: 5};
 
 var Utils = function(_params) {
-    if (typeof params != 'undefined') {
-        // Iterate over the key of params object.
+    if (typeof params != 'undefined') {        
         var keys = Object.keys(_params),
             len = keys.length,
             i = 0,

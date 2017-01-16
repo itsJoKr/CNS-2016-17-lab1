@@ -40,7 +40,7 @@ function createWindow () {
         frame: true, 
         show: false, 
         fullscreen: false
-        };
+    };
     
     mainWindow = new BrowserWindow(browserOptions);	
 

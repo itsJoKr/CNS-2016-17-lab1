@@ -23,7 +23,7 @@ var source,
     public_key,
     table;
 
-// Load and compile Handlebar msg template/s.    
+// Load and compile Handlebar msg templates.    
 try {
     source = require('fs').readFileSync('./view/clientCredentials.handlebars', 'utf-8');
     partial = require('fs').readFileSync('./view/clientCredentialsPartial.handlebars', 'utf-8');

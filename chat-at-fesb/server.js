@@ -34,8 +34,7 @@ var utils = (function() {
 	}
 })();
 
-var server = net.createServer( function(socket) {
-	
+var server = net.createServer( function(socket) {	
 	socket.on('data', function(data) {        
         try {
             var _msg = JSON.parse(data);
@@ -125,7 +124,6 @@ function sendTo(sender, receiver, msg) {
 	}
 }
 
-
 function deleteFromArray(clientID) {
     var client;
 	for (var i=0, len = CLIENTS.length; i<len; i++) {
@@ -137,8 +135,10 @@ function deleteFromArray(clientID) {
 	    }
 	}	
 	
-    broadcast(client, JSON.stringify( { type: 2, // 2 = client left
-                                        clientID: client.clientID } ));    
+    broadcast(client, JSON.stringify({ 
+		type: 2, // 2 = client left
+        clientID: client.clientID 
+	}));    
     
 	printClients(CLIENTS); 
 }
@@ -156,8 +156,10 @@ function getNames(receiver) {
     
 	for (var i=0, len = CLIENTS.length; i<len; i++) {
         if (typeof CLIENTS[i].clientID !== 'undefined') {    		
-		    _clients.clients.push( { username: CLIENTS[i].username,
-                                   clientID: CLIENTS[i].clientID} );
+		    _clients.clients.push({ 
+				username: CLIENTS[i].username,
+                clientID: CLIENTS[i].clientID
+			});
         } 
 	}
     return _clients;

@@ -1,7 +1,7 @@
 {
     "name": "chat-at-fesb",
     "version": "0.2.0",
-    "description": "Electron application for teaching cryptography and network security",
+    "description": "Simple Electron application for teaching cryptography and network security.",
     "main": "main.js",
     "scripts": {
         "start": "electron main.js"

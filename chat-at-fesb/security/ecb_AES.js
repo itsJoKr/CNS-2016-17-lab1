@@ -7,7 +7,7 @@ function encrypt(key, iv, plaintext, callback) {
         var ciphertext = cipher.update(plaintext,'utf8','hex');
         ciphertext += cipher.final('hex');    
         if (callback) callback(null, ciphertext);
-        return ciphertext; // Backward compatibility
+        return ciphertext;
     } catch(err) {
         if (callback) callback(err);
         return;
@@ -20,7 +20,7 @@ function decrypt(key, iv, ciphertext, callback) {
         var plaintext = decipher.update(ciphertext, 'hex', 'utf8');
         plaintext += decipher.final('utf8');
         if (callback) callback(null, plaintext);
-        return plaintext; // Backward compatibility
+        return plaintext;
     } catch(err) {
         if (callback) callback(err);
         return;
@@ -38,4 +38,3 @@ module.exports = {
     decrypt: decrypt,
     setAlgorithm: setAlgorithm 
 };
-

@@ -68,7 +68,7 @@ $(document).ready(function() {
     //=========================================================
     // Handles TCP socket communication and incoming messages.
     //=========================================================
-    if ( joinBtn.length ) { // 'joinBtn' exist?
+    if ( joinBtn.length ) { // Check if DOM elements actually exist.
         var timer;
         joinBtn.on("click", function() {
             var loader = showLoader(introPage, "Connecting to " + serverModel.server + ':' + serverModel.port); 

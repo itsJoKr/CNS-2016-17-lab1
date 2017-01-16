@@ -1,8 +1,8 @@
 'use strict'
 
-/**
- * Implement simple two-way binding between model objects and DOM elements.
- */
+//==========================================================================
+// Implements simple two-way binding between model objects and DOM elements.
+//==========================================================================
 function Bind(data, _model) {
     var model = {};
     if ( _model ) model = _model; // To be able to extend existing model _model
