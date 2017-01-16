@@ -134,9 +134,9 @@ function sendPubKeyRequest(event) {
 // Simple (insecure) key agreement protocol based
 // on public key cryptography. 
 //=================================================
-function keyAgreementProtocol(_msg) {
+function keyAgreementProtocol(_msg) {    
     console.log(localClientID, _msg);
-    
+
     if (_msg !== undefined) {
         
         //===========================
@@ -148,7 +148,7 @@ function keyAgreementProtocol(_msg) {
                     if (RESPONDER_STATE === 0 && public_key !== undefined) {                        
                         var _response = {
                             type: 3, // 3 = public key agreement protocol,
-                            RESPONDER: 1, // 1 = respond with the public key          
+                            RESPONDER: 0, // 0 = respond with the public key          
                             from: localClientID,
                             to: _msg.from,
                             content: JSON.stringify(public_key) 
@@ -159,7 +159,9 @@ function keyAgreementProtocol(_msg) {
                         
                         setTimeout(function() { // Reseting the state after a timeout
                             RESPONDER_STATE = 0;
-                        }, 4000);                                             
+                        }, 4000);
+
+                        console.log(localClientID, _response);                                             
                     }
                     break;
                     
@@ -167,14 +169,16 @@ function keyAgreementProtocol(_msg) {
                     if (RESPONDER_STATE === 1) {
                         var _response = {
                             type: 3, // 3 = public key agreement protocol
-                            RESPONDER: 2, // 2 = send RESPONDER finished   
+                            RESPONDER: 1, // 1 = send RESPONDER finished   
                             from: localClientID,
                             to: _msg.from,
                             content: "RESPONDER FINISHED" 
                         };
                                          
                         socket.write( JSON.stringify(_response) );                                         
-                        RESPONDER_STATE = 2;                                         
+                        RESPONDER_STATE = 2;                  
+
+                        console.log(localClientID, _response);                       
                     }
                     break;
                     
@@ -202,6 +206,7 @@ function keyAgreementProtocol(_msg) {
                             INITIATOR_STATE = 0;
                         }, 4000);                        
                     }
+                    
                     break;
                       
                 default:     
@@ -211,7 +216,7 @@ function keyAgreementProtocol(_msg) {
         if (_msg.RESPONDER !== undefined) { // Msg from RESPONDER  
             
             switch (_msg.RESPONDER) {
-                case 1: // 1 = got a public key
+                case 0: // 1 = got a public key
                     if (INITIATOR_STATE === 1) {
                         var _response = {
                             type: 3, // 3 = public key agreement protocol
@@ -223,10 +228,12 @@ function keyAgreementProtocol(_msg) {
                         
                         socket.write( JSON.stringify(_response) );
                         INITIATOR_STATE = 2;     
+                        
+                        console.log(localClientID, _response);
                     }
                     break;
                     
-                case 2: // 2 = got RESPONDER finished
+                case 1: // 2 = got RESPONDER finished
                     if (INITIATOR_STATE === 2) {
                         var _response = {
                             type: 3, // 3 = public key agreement protocol
@@ -237,7 +244,9 @@ function keyAgreementProtocol(_msg) {
                         };
                         
                         socket.write( JSON.stringify(_response) );
-                        INITIATOR_STATE = 0;                        
+                        INITIATOR_STATE = 0; 
+
+                        console.log(localClientID, _response);                       
                     }
                     break;
                     
