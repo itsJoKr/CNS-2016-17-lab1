@@ -9,7 +9,7 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
 1. Klonirajte ovaj _GitHub_ repozitorij (pri tome koristite _Git Bash_ komandni prozor).  
     ```Bash
     # U osobnom direktoriju (npr. `C:/Users/Mario`) izvršite
-    $ git clone https://github.com/mcagalj/CNS-2016-17.git lab-1  
+    $ git clone https://github.com/mcagalj/CNS-2016-17-lab1.git lab-1  
     $ cd lab-1
     $ ls
    ```
