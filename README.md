@@ -6,7 +6,7 @@ U okviru vježbe upoznajemo se s osnovnim sigurnosnim prijetnjama i ranjivostima
 U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u i _Electron_ okviru za razvoj desktop aplikacija. 
 
 ## Uputstva za instalaciju i pokretanje
-1. Klonirajte ovaj _GitHub_ repozitorij.  
+1. Klonirajte ovaj _GitHub_ repozitorij (koristite _Git Bash_ komandni prozor).  
     ```Bash
     # U osobnom direktoriju (npr. `C:/Users/Mario`) izvršite
     $ git clone https://github.com/mcagalj/CNS-2016-17.git lab-1  
