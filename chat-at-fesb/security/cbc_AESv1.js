@@ -4,11 +4,6 @@ const iv_length_hex = 32;
 var Cipher = require('./ecb_AES.js');
 Cipher.setAlgorithm('aes-128-cbc');
 
-module.exports = {
-    encrypt: encrypt,
-    decrypt: decrypt 
-};
-
 function encrypt(key, plaintext, callback) {
     if ( key && plaintext ) {
         crypto.randomBytes(iv_length_bytes, function(err, iv) { // Generate random IV
@@ -68,3 +63,8 @@ function decrypt(key, ciphertext, callback) {
     callback = null;
     return;   
 }
+
+module.exports = {
+    encrypt: encrypt,
+    decrypt: decrypt 
+};

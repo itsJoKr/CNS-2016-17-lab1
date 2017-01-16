@@ -151,8 +151,10 @@ function printClients(clientArray) {
 }
 
 function getNames(receiver) {
-    var _clients = { 'clientID': receiver.clientID,
-                     'clients': []};
+    var _clients = { 
+		'clientID': receiver.clientID,
+		'clients': []
+	};
     
 	for (var i=0, len = CLIENTS.length; i<len; i++) {
         if (typeof CLIENTS[i].clientID !== 'undefined') {    		

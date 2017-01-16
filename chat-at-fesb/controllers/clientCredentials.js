@@ -42,8 +42,7 @@ var Clients = function(_socket, _container, _clients) {
     localClientID = _clients.clientID;
     initClientsView(); 
     clientsSecrets = bindModelView(clients);     
-    if ( $.isEmptyObject(clientsSecrets) ) table.hide();
-    console.log(clientsSecrets);
+    if ( $.isEmptyObject(clientsSecrets) ) table.hide();    
 };
 
 Clients.prototype.addClient = function(client) {   
