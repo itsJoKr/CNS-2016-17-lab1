@@ -1,16 +1,17 @@
-var Handlebars = require('handlebars');
-var $ = require('jquery');
-var Bind = require('../binder');
-var crypto = require('crypto');
-const fs = require('fs')
-const ipc = require('electron').ipcRenderer;
-const exec = require('child_process').exec;
-const async = require('async');
-const assert = require('assert');
+const Handlebars = require('handlebars'),
+      $ = require('jquery'),
+      Bind = require('../binder'),
+      crypto = require('crypto'),
+      fs = require('fs'),
+      ipc = require('electron').ipcRenderer,
+      exec = require('child_process').exec,
+      async = require('async'),
+      assert = require('assert');
 
 var source,
     partial, 
     template,
+    templatePartial,
     socket,
     container,
     INITIATOR_STATE = 0,
