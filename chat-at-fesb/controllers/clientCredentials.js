@@ -282,7 +282,7 @@ function loadPublicKey(path, callback) {
 }
 
 ipc.on('loadAsymmKeys', function(event, password) {
-    const keysPath = __dirname + '/../security/keys/'; // TODO: Read these from config...
+    const keysPath = fs.realpathSync('.') + '/security/keys/'; // TODO: Read these from config...
     const privateKeyPath = keysPath + 'private_key.pem';
     const publicKeyPath = keysPath + 'public_key.pem';
     var asyncTasks = [];
