@@ -1,168 +1,152 @@
 'use strict'
 
-var net = require('net'),
-    debug = require('debug')('server'); // set DEBUG=server
+const Net = require('net'),	
+      debug = require('debug')('server'); // set DEBUG=server
 
-var HOST = '0.0.0.0',
+const Constants = {
+    TYPE_INIT: 0,
+    TYPE_CLIENT_JOINED: 1,
+    TYPE_CLIENT_LEFT: 2,
+    TYPE_KEY_AGREE_PROT: 3	
+}
+
+let HOST = '0.0.0.0',
     PORT = 6968,
-    CLIENTS = [],
-    date = new Date();
+    CLIENTS = [];
 
-var utils = (function() {
-	var crypto = require('crypto');
+const utils = (() => {
+	const crypto = require('crypto');
 	
-	var hex2dec = function( hexx ) {
-		var hex = hexx.toString();
-		var str = '';
-		var dec = 0;
-		for (var i = 0; i < hex.length; i += 2) {
+	let hex2dec = (hexx) => {
+		let hex = hexx.toString(),
+			str = '',
+			dec = 0;
+		for (let i = 0; i < hex.length; i += 2) {
 			dec = parseInt(hex.substr(i, 2), 16) % 25;
-			if ( dec >= 0 && dec<=9 ) {
-				dec = dec+48;
+			if ( dec >= 0 && dec <= 9 ) {
+				dec += 48;
 				str += String.fromCharCode(dec);
 			}
 		}
 		return str;
 	}	
 	
-	function getID() {
-		return "ID" + hex2dec( crypto.randomBytes(30).toString('hex') );
-	}
-	
 	return {
-		getID: getID
+		getID: () => 'ID' + hex2dec(crypto.randomBytes(30).toString('hex'))
 	}
 })();
 
-var server = net.createServer( function(socket) {	
-	socket.on('data', function(data) {        
-        try {
-            var _msg = JSON.parse(data);
-            
-            switch (_msg.type) {
-                case 3: // 3 = public key agreement protocol 
-                    sendTo(socket, _msg.to, data);
-                    break;
-                default: // other messages
-                    if ( socket.username ) { // client already registered            
-                        broadcast(socket, data); 
-                    } else { // client not registered yet
-                        try {
-                            socket.username = JSON.parse(data).username;
+const server = Net.createServer((socket) => {	
+	socket.on('data', (data) => {        
+		const msg = JSON.parse(data);
+		switch (msg.type) {
+			case Constants.TYPE_KEY_AGREE_PROT: // 3 = public key agreement protocol 
+				sendTo(socket, msg.to, data);
+				break;
 
-                            broadcast(socket, JSON.stringify({ 
-                                type: 1, // 1 = new client joined
-                                clientID: socket.clientID,        
-                                username: socket.username 
-                            }));                
-                            
-                        } catch(err) {
-                            debug(err);
-                            debug(data);
-                        }
-                    }                                                
-            }                
-            
-        } catch(err) {
-            debug(err);
-        }                		                
-	});
-    
-	socket.on('error', function(error) {
+			default:
+				// Client already registered with the server.            	
+				if (socket.nickname) {
+					broadcast(socket, data); 
+				// Client not yet registered its nickname.						
+				} else {
+					socket.nickname = JSON.parse(data).nickname;
+					broadcast(socket, JSON.stringify({ 
+						type: Constants.TYPE_CLIENT_JOINED, // 1 = new client joined
+						clientID: socket.clientID,        
+						nickname: socket.nickname 
+					}));      
+					printClients();                                      
+				}                                                
+		}                         
+	}).on('error', function(error) {
 		debug('ERROR ' + error.stack);
-        deleteFromArray(socket.clientID);
-	});
-
-	socket.on('end', function() {			
-		deleteFromArray(socket.clientID);
-	});
-
-	socket.on('close', function() {
+        deleteClient(socket);
+	}).on('end', function() {			
+		deleteClient(socket);		
+	}).on('close', function() {
 		debug('SOCKET CLOSED');
 	});
-
-});
-
-server.listen(PORT, HOST, function() {
+}).listen(PORT, HOST, () => {
 	debug('Server listening on ' + server.address().address +':'+ server.address().port);
-});
-
-server.on('connection', function(socket) {
+}).on('connection', (socket) => {
 	debug('CONNECTED: ' + socket.remoteAddress +':'+ socket.remotePort);
-	socket.clientID = utils.getID();
-	CLIENTS.push(socket);
-	socket.write( JSON.stringify({ 
-        type: 0, // 0 = init message
-        username: "SERVER@FESB", // Do not change this value...
-		timestamp: date.getHours() + ":" + ('0' + date.getMinutes()).slice(-2),
-		content: "Welcome to CHAT@FESB!", 
-        clients: getNames(socket) 
-    }));                                    
-                                                              
-	printClients(CLIENTS);	
+	const clientID = utils.getID();
+	socket.clientID = clientID;
+	CLIENTS = CLIENTS.concat([socket]);
+	const date = new Date();
+	const timestamp = Date.UTC(
+		date.getFullYear(), 
+		date.getMonth(), 
+		date.getDay(), 
+		date.getHours(), 
+		date.getMinutes() + new Date().getTimezoneOffset(), 
+		date.getSeconds(), 
+		date.getMilliseconds());
+
+	socket.write(JSON.stringify({ 
+        type: Constants.TYPE_INIT, // 0 = init message
+		clientID: clientID,
+        nickname: 'SERVER@FESB',
+		timestamp: timestamp,
+		content: 'Welcome to CHAT@FESB!', 
+        clients: getOtherClients(socket)
+    }));                                                                                                  
+}).on('error', (err) => {
+	debug(err);
 });
 
 function broadcast(sender, msg) {
-	debug('BROADCAST: ' + msg);     
-	for (var i=0, len = CLIENTS.length; i<len; i++) {
-	    if (typeof CLIENTS[i].clientID !== 'undefined' && CLIENTS[i] !== sender) {
-			debug('SENDING: ' + sender.remotePort + '(' + sender.clientID + ') --> ' + CLIENTS[i].remotePort + '(' + CLIENTS[i].clientID + ')');
-	        CLIENTS[i].write(msg);
-	    }
-	}
+	debug('BROADCAST: ' + msg);  
+	let i = 0;   	
+	CLIENTS.forEach((client) => {
+	    if (client.clientID && client !== sender) {
+			debug((i += 1) + '. SENDING: ' + sender.clientID + ' --> ' + client.clientID);
+	        client.write(msg);
+	    }		
+	});
 }
 
 function sendTo(sender, receiver, msg) {
 	debug('SEND TO: ' + msg);
-    
-	for (var i=0, len = CLIENTS.length; i<len; i++) {
-	    if (typeof CLIENTS[i].clientID !== 'undefined' && CLIENTS[i].clientID == receiver) {
-			debug('SENDING: ' + sender.remotePort + '(' + sender.clientID + ') --> ' + CLIENTS[i].remotePort + '(' + CLIENTS[i].clientID + ')');
-	        CLIENTS[i].write(msg);
-            break;
-	    }
-	}
+	CLIENTS.some((client) => {
+	    if (client.clientID && client.clientID == receiver) {
+			debug('SENDING: ' + sender.clientID + ' --> ' + client.clientID);
+	        client.write(msg);
+            return true;
+	    }		
+	});
 }
 
-function deleteFromArray(clientID) {
-    var client;
-	for (var i=0, len = CLIENTS.length; i<len; i++) {
-	    if ( CLIENTS[i].clientID === clientID ) {
-			debug('DELETING clientID: ' + clientID);
-            client = CLIENTS[i];
-	        CLIENTS.splice(i,1);
-			break;
-	    }
-	}	
-	
-    broadcast(client, JSON.stringify({ 
-		type: 2, // 2 = client left
-        clientID: client.clientID 
-	}));    
-    
-	printClients(CLIENTS); 
-}
-
-function printClients(clientArray) {
-	debug('CLIENTS:')
-	for (var i=0, len = clientArray.length; i<len; i++) {		
-		debug((i+1) + '. ' + clientArray[i].remoteAddress + ':' + clientArray[i].remotePort + ' (id: ' + clientArray[i].clientID + ')');
+function deleteClient(client) {				
+	const index = CLIENTS.indexOf(client);
+	if (index > -1) {
+		debug('DELETING clientID: ' + client.clientID);
+		CLIENTS.splice(index, 1);
+		broadcast(client, JSON.stringify({ 
+			type: Constants.TYPE_CLIENT_LEFT, // 2 = client left
+			clientID: client.clientID
+		}));    
+		printClients(); 		
 	}	
 }
 
-function getNames(receiver) {
-    var _clients = { 
-		'clientID': receiver.clientID,
-		'clients': []
-	};
-    
-	for (var i=0, len = CLIENTS.length; i<len; i++) {
-        if (typeof CLIENTS[i].clientID !== 'undefined') {    		
-		    _clients.clients.push({ 
-				username: CLIENTS[i].username,
-                clientID: CLIENTS[i].clientID
-			});
-        } 
-	}
-    return _clients;
+function printClients() {
+	debug('CLIENTS:');
+	let i = 0;
+	CLIENTS.forEach((client) => { 
+		debug((i += 1) + '. ' + client.remoteAddress + ':' + client.remotePort + ' (id: ' + client.clientID + ', nickname: ' + client.nickname + ')');
+	});
+}
+
+function getOtherClients(receiver) {
+	let clients = {}
+	CLIENTS.forEach((client) => {
+        if (client.clientID && 
+			client.nickname &&
+			client !== receiver) {    		
+			clients[client.clientID] = {nickname: client.nickname};
+        } 		
+	})
+    return clients;
 }
