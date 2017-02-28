@@ -28,14 +28,12 @@ function clientLeft(msg) {
 }
 
 function keyAgreeProt(msg) {
-    //console.log(msg)
 }
 
 /** 
  * Regular message processing function. 
  */
 function regular(msg) {
-    //console.log(msg)
     ServerActionCreator.serverNewMsg(msg)
 }
 

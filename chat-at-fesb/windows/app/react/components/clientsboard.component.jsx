@@ -66,8 +66,6 @@ class ClientsBoard extends Component {
             }
         }
 
-        console.log(button())
-
         const formattedClients = Object.keys(clients).map((client, index) => {   
             return ( 
                 <TableRow 

@@ -4,12 +4,9 @@
   "description": "Simple Electron application for teaching cryptography and network security",
   "main": "main.js",
   "scripts": {
-    "babel": "babel",
-    "build": "webpack",
     "watch": "./node_modules/.bin/webpack-dev-server --hot",
     "server": "set DEBUG=server & node server.js",
-    "start": "electron .",
-    "css": "./node_modules/.bin/node-sass"
+    "start": "electron ."
   },
   "author": "Mario Cagalj",
   "license": "ISC",

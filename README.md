@@ -36,7 +36,12 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
     ```
     npm run watch
     ```
-    Kao što možete vidjeti u `package.json` skripti (objektu `scripts`) na ovaj način pokrećemo _webpack development server_ koji će posluživati klijentsku _chat_ aplikaciju. Pri tome [_webpack_](https://webpack.js.org) koristi _webpack.config.js_ konfiguracijsku datoteku za generiranje klijentske aplikacije. Ovakav način pokretanja aplikacije je koristan u tijeku razvoja iste jer _webpack-dev-server_ automatski osvježi aplikaciju (web aplikaciju u našem slučaju) pri svakoj promjeni izvornog koda. Ovaj aspekt _webpack_-a ćete posebno cijeniti kad budete osobno modificirali izvorni kod :-)
+    Kao što možete vidjeti u `package.json` skripti (objektu `scripts`) na ovaj način pokrećemo _webpack development server_ koji će posluživati klijentsku _chat_ aplikaciju. [_webpack_](https://webpack.js.org) koristi _webpack.config.js_ skriptu za konfiguraciju procesa generiranja (eng. _bundling_) klijentske aplikacije. Ovakav način pokretanja aplikacije koristan je u tijeku razvoja iste jer _webpack-dev-server_ automatski osvježi aplikaciju (web aplikaciju u našem slučaju) pri svakoj promjeni izvornog koda. Ovaj aspekt _webpack_-a ćete posebno cijeniti kad budete osobno modificirali izvorni kod :-)
+
+    Uvidom u `index.html` datoteku glavne aplikacije (`chat-at-fesb\windows\app\index.html`), možete vidjeti da se _JavaScript_ kod `app.bundle.js` uistinu poslužuje sa _webpack-dev-server_-a koji je pokrenut na lokalnom računalu:
+    ```html 
+    <script src="http://localhost:8080/app.bundle.js"></script>
+    ```
 
 5. U istom direktoriju (`chat-at-fesb/`) pokrenite klijentsku _chat_ aplikaciju i pokušajte se povezati sa serverom na lokalnom računalu.  
 **NAPOMENA:** U klijentu nije nužno unositi adresu servera ni broj porta ako je server pokrenut na lokalnom računalu i sluša na zadanom portu.
