@@ -148,27 +148,27 @@ $cell--pad: 1rem;
 
 .overlay {
     display: none;
-	position: absolute;
-	top: 0px; 
-	left: 0px;
-	right: 0px;
-	bottom: 0px;
-	background: $overlay--bg-color;
-	z-index: 99999;
+    position: absolute;
+    top: 0px; 
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    background: $overlay--bg-color;
+    z-index: 99999;
 }
 
 .align-middle {
     position: absolute;
-	top: 50%;
-	transform: translateY(-50%);    
+    top: 50%;
+    transform: translateY(-50%);    
 }
 
 .absolute-center {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translateX(-50%) translateY(-50%);
-	width: 100%;     
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    width: 100%;     
 }
 
 .before {
@@ -643,48 +643,48 @@ $secret--padding: 0 40px;
 // ReactCSSTransitionGroup
 //--------------------------
 .app-appear {
-  opacity: 0.01;
+    opacity: 0.01;
 }
 
 .app-appear.app-appear-active {
-  opacity: 1;
-  transition: opacity .5s ease-in;
+    opacity: 1;
+    transition: opacity .5s ease-in;
 }
 
 .app-enter {
-  opacity: 0.01;
+    opacity: 0.01;
 }
 
 .app-enter.app-enter-active {
-  opacity: 1;
-  transition: opacity 0.5s ease-in;
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
 }
 
 .app-leave {
-  opacity: 1;
+    opacity: 1;
 }
 
 .app-leave.app-leave-active {
-  opacity: 0.01;
-  transition: opacity 300ms ease-in;
+    opacity: 0.01;
+    transition: opacity 300ms ease-in;
 }
 
 .msg-appear {
-  opacity: 0.01;
+    opacity: 0.01;
 }
 
 .msg-appear.msg-appear-active {
-  opacity: 1;
-  transition: opacity .5s ease-in;
+    opacity: 1;
+    transition: opacity .5s ease-in;
 }
 
 .msg-enter {
-  opacity: 0.01;
+    opacity: 0.01;
 }
 
 .msg-enter.msg-enter-active {
-  opacity: 1;
-  transition: opacity 0.5s ease-in;
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
 }
 
 

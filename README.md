@@ -30,7 +30,7 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
     ```Bash    
     set DEBUG=server & node server.js # Ovo ne izvršavati!
     ```
-    Na ovaj postavljate `DEBUG` Windows _enviroment_ varijablu i pokrećete _chat_ server. Postavljena `DEBUG` varijabla omogućuje praćenje događaja i poruka koje server generira u realnom vremenu. Alternativno, server (`server.js`) možete pokrenuti direktno korištenjem naredbe `node` (alternativno `nodemon`).
+    Izvršavanjem navedene naredbe postavljate `DEBUG` Windows _enviroment_ varijablu i pokrećete _chat_ server. Definiranjem `DEBUG` varijable omogućujete praćenje događaja i poruka koje server generira u realnom vremenu. Alternativno, server (`server.js`) možete pokrenuti direktno korištenjem naredbe `node` (alternativno `nodemon`).
 
 4. Pokrenite _webpack-dev-server_ izvršavanjem sljedeće naredbe u komandnom prozoru ili _VSC_ integriranom terminalu:
     ```
@@ -38,7 +38,7 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
     ```
     Kao što možete vidjeti u `package.json` skripti (objektu `scripts`) na ovaj način pokrećemo _webpack development server_ koji će posluživati klijentsku _chat_ aplikaciju. [_webpack_](https://webpack.js.org) koristi _webpack.config.js_ skriptu za konfiguraciju procesa generiranja (eng. _bundling_) klijentske aplikacije. Ovakav način pokretanja aplikacije koristan je u tijeku razvoja iste jer _webpack-dev-server_ automatski osvježi aplikaciju (web aplikaciju u našem slučaju) pri svakoj promjeni izvornog koda. Ovaj aspekt _webpack_-a ćete posebno cijeniti kad budete osobno modificirali izvorni kod :-)
 
-    Uvidom u `index.html` datoteku glavne aplikacije (`chat-at-fesb\windows\app\index.html`), možete vidjeti da se _JavaScript_ kod `app.bundle.js` uistinu poslužuje sa _webpack-dev-server_-a koji je pokrenut na lokalnom računalu:
+    Uvidom u `index.html` datoteku glavne aplikacije (`chat-at-fesb\windows\app\index.html`) možete vidjeti da se klijentska aplikacija `app.bundle.js` uistinu poslužuje sa _webpack-dev-server_-a koji je pokrenut na lokalnom računalu:
     ```html 
     <script src="http://localhost:8080/app.bundle.js"></script>
     ```
