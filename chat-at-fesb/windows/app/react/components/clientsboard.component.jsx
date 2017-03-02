@@ -1,7 +1,6 @@
 import React, {Component} from 'react'
 import {Constants} from '../dispatcher/app.dispatcher.js'
 import TableRow from './tablerow.component.jsx'
-import LoadForm from './load.component.jsx'
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
 
 class ClientsBoard extends Component {
