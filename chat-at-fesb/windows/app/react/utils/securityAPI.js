@@ -34,7 +34,6 @@ class SecurityAPI {
             );
         })
     }
-
 }
 
 export default SecurityAPI

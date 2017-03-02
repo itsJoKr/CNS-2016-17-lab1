@@ -8,7 +8,7 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
 ## Uputstva za instalaciju i pokretanje Chat@FESB aplikacije
 1. Klonirajte ovaj _GitHub_ repozitorij (pri tome koristite _Git Bash_ komandni prozor).  
     ```Bash
-    # U osobnom direktoriju (npr. `C:/Users/Mario`) izvršite
+    # U osobnom direktoriju (npr. `C:/Users/Student/Desktop/Mario`) izvršite
     $ git clone https://github.com/mcagalj/CNS-2016-17-lab1.git lab-1  
     $ cd lab-1
     $ ls
@@ -18,7 +18,7 @@ U vježbi ćemo koristiti klijent-server _chat_ aplikaciju pisanu u _Node.js_-u 
 
     **NAPOMENA**: Instalaciju potrebnih modula možete pokrenuti na identičan način iz Windows komandnog prozora (nije nužno koristiti _Git Bash_ komandni prozor) kao i integriranog terminala u _Visual Studio Code_ editoru (`View > Integrated Terminal`).
     ```Bash
-    # U direktoriju `chat-at-fesb/` (npr. `C:/Users/Mario/lab-1/chat-at-fesb`) izvršite
+    # U direktoriju `chat-at-fesb/` (npr. `C:/Users/Student/Desktop/Mario/lab-1/chat-at-fesb`) izvršite
     $ npm install
     ```
 
