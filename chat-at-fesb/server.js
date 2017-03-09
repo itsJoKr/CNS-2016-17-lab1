@@ -61,7 +61,7 @@ const server = Net.createServer((socket) => {
 		}                         
 	}).on('error', function(error) {
 		debug('ERROR ' + error.stack);
-        deleteClient(socket);
+    	deleteClient(socket);
 	}).on('end', function() {			
 		deleteClient(socket);		
 	}).on('close', function() {
