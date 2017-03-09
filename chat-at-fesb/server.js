@@ -1,7 +1,7 @@
 'use strict'
 
 const Net = require('net'),	
-      debug = require('debug')('server'); // set DEBUG=server
+    debug = require('debug')('server'); // set DEBUG=server
 
 const Constants = {
     TYPE_INIT: 0,
