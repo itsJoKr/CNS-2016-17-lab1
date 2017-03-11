@@ -88,7 +88,11 @@ function createMainWindow () {
     mainWindow = new BrowserWindow(browserOptions)	
 
     // ...and load the index.html of the app.
-    mainWindow.loadURL(path.join(__dirname, 'windows/app/index.html'))
+    // mainWindow.loadURL(path.join(__dirname, 'windows/app/index.html'))
+
+    // Linux filesystem fix
+    mainWindow.loadURL('file://' + __dirname + '/windows/app/index.html');
+
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
     })
@@ -116,7 +120,7 @@ function createLoadKeysWindow(mainWindow) {
     }
 
     loadKeysWindow = new BrowserWindow(browserOptions)
-    loadKeysWindow.loadURL(path.join(__dirname, 'windows/loadkeys/index.html'))
+    loadKeysWindow.loadURL('file://' + __dirname + '/windows/loadkeys/index.html')
     loadKeysWindow.on('ready-to-show', () => {
         loadKeysWindow.show()
     })
