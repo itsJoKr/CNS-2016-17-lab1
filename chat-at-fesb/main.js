@@ -1,6 +1,8 @@
 const electron = require('electron'),
       path = require('path')
 
+const url = require('url')
+
 // Module to control application life.
 const app = electron.app
 // Module to create native browser window.
@@ -78,9 +80,9 @@ function createMainWindow () {
     // Create the browser window...
     const browserOptions = { 
         width: 800, 
-        height: 800, 
-        frame: true, 
-        show: false, 
+        height: 800,
+        frame: true,
+        show: false,
         fullscreen: false,
         backgroundColor: '#000000'
     }
@@ -88,7 +90,17 @@ function createMainWindow () {
     mainWindow = new BrowserWindow(browserOptions)	
 
     // ...and load the index.html of the app.
-    mainWindow.loadURL(path.join(__dirname, 'windows/app/index.html'))
+    // mainWindow.loadURL(path.join(__dirname, 'windows/app/index.html'))
+
+    // Linux filesystem fix
+    // mainWindow.loadURL('file://' + __dirname + '/windows/app/index.html');
+
+    mainWindow.loadURL((url.format({
+        pathname: path.join(__dirname, '/windows/app/index.html'),
+        protocol: 'file:',
+        slashes: true
+    })))
+
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
     })
@@ -110,13 +122,13 @@ function createLoadKeysWindow(mainWindow) {
         resizable: false,
         frame: false,
         skipTaskbar: true,
-        parent: mainWindow, 
-        modal: true, 
-        show: false                 
+        parent: mainWindow,
+        modal: true,
+        show: false
     }
 
     loadKeysWindow = new BrowserWindow(browserOptions)
-    loadKeysWindow.loadURL(path.join(__dirname, 'windows/loadkeys/index.html'))
+    loadKeysWindow.loadURL('file://' + __dirname + '/windows/loadkeys/index.html')
     loadKeysWindow.on('ready-to-show', () => {
         loadKeysWindow.show()
     })

@@ -17,7 +17,7 @@ class UIActionCreator {
             type: Constants.MSG,
             payload: msg
         })               
-        ServerAPI.write(msg)
+        ServerAPI.write({...msg})
     }
 
     generateKey(params) {

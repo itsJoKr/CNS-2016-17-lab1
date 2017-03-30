@@ -2,6 +2,11 @@ import ServerBaseAPI from './serverBaseAPI.js'
 import ServerActionCreator from '../actions/server.actioncreator.js'
 import {Constants} from '../dispatcher/app.dispatcher.js'
 import Utils from './utils.js'
+import ClientsStore from '../stores/clients.store.js';
+
+const Sekjuriti = require('./securityEPI').Sekjuriti;
+
+const security = new Sekjuriti(Sekjuriti.CEASAR);
 
 /** 
  * Control message processing functions. 
@@ -34,7 +39,20 @@ function keyAgreeProt(msg) {
  * Regular message processing function. 
  */
 function regular(msg) {
-    ServerActionCreator.serverNewMsg(msg)
+    let message = msg.content;
+
+    if (ClientsStore.getState().clients[msg.clientID].secret === undefined) {
+        ServerActionCreator.serverNewMsg(msg);
+    } else {
+        const secret = ClientsStore.getState().clients[msg.clientID].secret;
+        security.decrypt({
+            cipher: message,
+            key: parseInt(secret)
+        }).then(result => {
+            msg.content = result;
+            ServerActionCreator.serverNewMsg(msg)
+        });
+    }
 }
 
 const Process = {
@@ -67,7 +85,28 @@ class ServerAPI extends ServerBaseAPI {
     }
 
     write(data) {
-        ServerBaseAPI.write(data)
+        // Enkripicija ide ode
+        console.log('Server sending: ', data);
+        let msg = data.content;
+        const { secret } = ClientsStore.getState()
+
+        if (secret === null) {
+            console.log('secret is null');
+            ServerBaseAPI.write(data)
+        } else {
+
+            let params = {
+                plaintext: msg,
+                key: parseInt(secret)
+            };
+
+            security.encrypt(params)
+                .then(result => {
+                    data.content = result;
+                    ServerBaseAPI.write(data);
+                })
+                .catch(err => console.log(err));
+        }
     }    
 }
 
