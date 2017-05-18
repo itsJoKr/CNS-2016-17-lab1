@@ -14,49 +14,54 @@ class ClientsStore extends BaseStore {
             secret: null,
             key: null,
             keysAsymm: {},
+            keyAgreeState: {
+                INITIATOR: Constants.KA_INITIATOR_STATE_0,
+                RESPONDER: Constants.KA_RESPONDER_STATE_0
+            },
             clients: {}}
     }
 
     reduce(state, action) {
-        const { 
-            clientID, 
-            nickname, 
-            clients, 
-            secret, 
+        const {
+            clientID,
+            nickname,
+            clients,
+            secret,
             key,
             privateKey,
-            publicKey } = action.payload
+            publicKey,
+            keyAgreeNextState } = action.payload
 
         switch(action.type) {
             case Constants.CONNECTED:
-                return {                    
-                    ...state,
-                    nickname: nickname} 
-
-            case Constants.TYPE_INIT: 
                 return {
-                    ...state,                    
+                    ...state,
+                    nickname: nickname}
+
+            case Constants.TYPE_INIT:
+                return {
+                    ...state,
                     clientID: clientID,
                     clients: clients}
 
             case Constants.TYPE_CLIENT_JOINED:
                 let client = {}
-                client[clientID] = {nickname: nickname}                  
+                client[clientID] = {nickname: nickname}
                 ipc.send('notify', {
-                     title: 'User joining',
-                     text: `User  ${nickname} has joined the chatroom.`
-                })                                       
+                    title: 'User joining',
+                    text: `User  ${nickname} has joined the chatroom.`
+                })
                 return {
                     ...state,
                     clients: {...state.clients, ...client}}
 
             case Constants.TYPE_CLIENT_LEFT:
                 let clientsAfter = {...state.clients}
-                delete clientsAfter[clientID]  
+                delete clientsAfter[clientID]
                 ipc.send('notify', {
-                     title: 'User leaving',
-                     text: `User ${state.clients[clientID].nickname} has left the chatroom.`
-                })                       
+                    title: 'User leaving',
+                    text: `User ${state.clients[clientID].nickname} has left the chatroom.`
+                })
                 return {
                     ...state,
                     action: Constants.TYPE_CLIENT_LEFT,
@@ -65,27 +70,27 @@ class ClientsStore extends BaseStore {
             case Constants.GENERATE_KEY:
                 // Local client
                 if (state.clientID === clientID) {
-                    return {                        
+                    return {
                         ...state,
                         secret: secret,
                         key: Constants.GENERATE_KEY} // Tell UI to show a spinner.
-                // Remote client    
+                    // Remote client
                 } else {
                     let clientsAfter = {...state.clients}
                     clientsAfter[clientID].secret = secret
-                    clientsAfter[clientID].key = Constants.GENERATE_KEY // Tell UI to show a spinner.                    
+                    clientsAfter[clientID].key = Constants.GENERATE_KEY // Tell UI to show a spinner.
                     return {
                         ...state,
                         clients: clientsAfter}
                 }
 
-            case Constants.GENERATE_KEY_DONE: 
+            case Constants.GENERATE_KEY_DONE:
                 // Local client
                 if (state.clientID === clientID) {
                     return {
                         ...state,
                         key: key}
-                // Remote client     
+                    // Remote client
                 } else {
                     let clientsAfter = {...state.clients}
                     clientsAfter[clientID].key = key
@@ -94,15 +99,15 @@ class ClientsStore extends BaseStore {
                         clients: clientsAfter}
                 }
 
-            case Constants.DELETE_KEY:                               
+            case Constants.DELETE_KEY:
                 // Local client
                 if (state.clientID === clientID) {
                     return {
                         ...state,
                         secret: null,
                         key: null}
-                        
-                // Remote client    
+
+                    // Remote client
                 } else {
                     let clientsAfter = {...state.clients}
                     clientsAfter[clientID].secret = null
@@ -115,14 +120,27 @@ class ClientsStore extends BaseStore {
             case Constants.LOAD_ASYM_KEYS:
                 return {
                     ...state,
-                    publicKey: Constants.LOAD_ASYM_KEYS // Tell UI to show a spinner.
-                }
+                    publicKey: Constants.LOAD_ASYM_KEYS} // Tell UI to show a spinner.
 
-            case Constants.LOAD_ASYM_KEYS_DONE:     
+            case Constants.LOAD_ASYM_KEYS_DONE:
                 return {
                     ...state,
                     privateKey: privateKey,
                     publicKey: publicKey}
+
+            case Constants.KEY_AGREE_REQ:
+                let keyAgreeStateAfterREQ = {...state.keyAgreeState}
+                keyAgreeStateAfterREQ.INITIATOR = keyAgreeNextState
+                return {
+                    ...state,
+                    keyAgreeState: keyAgreeStateAfterREQ}
+
+            case Constants.KEY_AGREE_RES:
+                let keyAgreeStateAfterRES = {...state.keyAgreeState}
+                keyAgreeStateAfterRES.RESPONDER = keyAgreeNextState
+                return {
+                    ...state,
+                    keyAgreeState: keyAgreeStateAfterRES}
 
             case Constants.ERROR:
                 return {
@@ -130,12 +148,16 @@ class ClientsStore extends BaseStore {
                     clientID: null,
                     secret: null,
                     key: null,
-                    keysAsymm: {},                    
-                    clients: {}}    
+                    keysAsymm: {},
+                    keyAgreeState: {
+                        INITIATOR: Constants.KA_INITIATOR_STATE_0,
+                        RESPONDER: Constants.KA_RESPONDER_STATE_0
+                    },
+                    clients: {}}
 
             default:
-                return state    
-        }                    
+                return state
+        }
     }
 }
 

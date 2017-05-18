@@ -16,7 +16,7 @@ class UIActionCreator {
         AppDispatcher.handleUIAction({
             type: Constants.MSG,
             payload: msg
-        })               
+        })
         ServerAPI.write({...msg})
     }
 
@@ -33,22 +33,22 @@ class UIActionCreator {
                         clientID: params.clientID,
                         key: key}
                 })
-            }).catch(err => { 
-                alert(err.message)
-                AppDispatcher.handleUIAction({
-                    type: Constants.GENERATE_KEY_DONE,
-                    payload: {
-                        clientID: params.clientID,
-                        key: null}
-                })                
+            }).catch(err => {
+            alert(err.message)
+            AppDispatcher.handleUIAction({
+                type: Constants.GENERATE_KEY_DONE,
+                payload: {
+                    clientID: params.clientID,
+                    key: null}
             })
+        })
     }
 
     deleteKey(params) {
         AppDispatcher.handleUIAction({
             type: Constants.DELETE_KEY,
             payload: params
-        })        
+        })
     }
 
     loadAsymmKeys() {
@@ -57,7 +57,7 @@ class UIActionCreator {
             AppDispatcher.handleUIAction({
                 type: Constants.LOAD_ASYM_KEYS,
                 payload: {}
-            })  
+            })
         })
 
         ipcRenderer.once('asymm-keys-loaded', (event, arg) => {
@@ -67,8 +67,12 @@ class UIActionCreator {
                     privateKey: arg ? arg[0] : null,
                     publicKey: arg ? arg[1] : null
                 }
-            })        
-        })        
+            })
+        })
+    }
+
+    keyAgreementRequest(toClientID) {
+        ServerAPI.keyAgreementRequest(toClientID)
     }
 }
 

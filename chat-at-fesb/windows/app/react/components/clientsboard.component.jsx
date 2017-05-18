@@ -14,7 +14,7 @@ class ClientsBoard extends Component {
             loadKeysBtnText: 'Load asym keys',
             loadKeysBtnTextActive: 'Loading...',
             loadKeysBtnTextDone: 'Asym keys \u2713', // \u2713 - checkmark
-            keyAgreeBtnText: 'Send request'
+            keyAgreeBtnText: 'Send request',
         }
 
         this._closeMe = this._closeMe.bind(this)
@@ -26,14 +26,14 @@ class ClientsBoard extends Component {
 
     render() {
         const clients = this.props.clients[0]
-        const { 
-            show, 
-            clientID, 
-            nickname, 
+        const {
+            show,
+            clientID,
+            nickname,
             localClientKey,
-            publicKey, 
-            onGenerateKey, 
-            onLoadKeys, 
+            publicKey,
+            onGenerateKey,
+            onLoadKeys,
             onSendRequest } = this.props
 
         const showKeySpinner = (clientID, key) => {
@@ -56,7 +56,7 @@ class ClientsBoard extends Component {
                             text: loadKeysBtnTextDone,
                             style: '-loaded'
                         }
-                    }     
+                    }
                 }
             }
             return {
@@ -65,56 +65,58 @@ class ClientsBoard extends Component {
             }
         }
 
-        const formattedClients = Object.keys(clients).map((client, index) => {   
-            return ( 
-                <TableRow 
+        const formattedClients = Object.keys(clients).map((client, index) => {
+            return (
+                <TableRow
                     key={index}
                     clientID={client}
-                    nickname={clients[client].nickname}       
-                    showKeySpinner={showKeySpinner(client, clients[client].key)}             
-                    placeholder={this.titles.secretCellPlaceholder}                    
+                    nickname={clients[client].nickname}
+                    showKeySpinner={showKeySpinner(client, clients[client].key)}
+                    placeholder={this.titles.secretCellPlaceholder}
+                    buttonStyle={clients[client].key && clients[client].key !== Constants.GENERATE_KEY ? '-loaded' : ''}
                     buttonText={this.titles.keyAgreeBtnText}
                     onGenerateKey={onGenerateKey}
-                    onButtonClick={onSendRequest}/>               
+                    onButtonClick={onSendRequest}/>
             )
-        })      
+        })
+
 
         return (
-            <div className={'cns-container clients-board ' + (show ? 'visible' : '')}>            
+            <div className={'cns-container clients-board ' + (show ? 'visible' : '')}>
                 <a href="#" className='close-btn' onClick={this._closeMe}>&times;</a>
-                <table className="clients-table">                
-                        <thead className="th">
-                            <tr>
-                                <th>{this.titles.tableHeaderCol1}</th>
-                                <th>{this.titles.tableHeaderCol2}</th>
-                                <th>{this.titles.tableHeaderCol3}</th>                        
-                            </tr>
-                        </thead>
-                        <ReactCSSTransitionGroup 
-                            component='tbody'
-                            transitionName='app'
-                            transitionAppear={true}
-                            transitionAppearTimeout={100}
-                            transitionEnter={true}
-                            transitionLeave={true}
-                            transitionEnterTimeout={500}
-                            transitionLeaveTimeout={500}> 
-                            {/* This row represent the local client. */}                       
-                            <TableRow 
-                                key={clientID}
-                                clientID={clientID}
-                                nickname={nickname}
-                                showKeySpinner={showKeySpinner(clientID, localClientKey)}                                
-                                placeholder={this.titles.secretCellPlaceholder}
-                                buttonStyle={button().style}
-                                buttonText={button().text}
-                                onGenerateKey={onGenerateKey}
-                                onButtonClick={onLoadKeys}/>
-                            {/* These rows represent other 'online' clients. */}                                
-                            {formattedClients}                    
-                        </ReactCSSTransitionGroup>
-                </table>               
-            </div> 
+                <table className="clients-table">
+                    <thead className="th">
+                    <tr>
+                        <th>{this.titles.tableHeaderCol1}</th>
+                        <th>{this.titles.tableHeaderCol2}</th>
+                        <th>{this.titles.tableHeaderCol3}</th>
+                    </tr>
+                    </thead>
+                    <ReactCSSTransitionGroup
+                        component='tbody'
+                        transitionName='app'
+                        transitionAppear={true}
+                        transitionAppearTimeout={100}
+                        transitionEnter={true}
+                        transitionLeave={true}
+                        transitionEnterTimeout={500}
+                        transitionLeaveTimeout={500}>
+                        {/* This row represent the local client. */}
+                        <TableRow
+                            key={clientID}
+                            clientID={clientID}
+                            nickname={nickname}
+                            showKeySpinner={showKeySpinner(clientID, localClientKey)}
+                            placeholder={this.titles.secretCellPlaceholder}
+                            buttonStyle={button().style}
+                            buttonText={button().text}
+                            onGenerateKey={onGenerateKey}
+                            onButtonClick={onLoadKeys}/>
+                        {/* These rows represent other 'online' clients. */}
+                        {formattedClients}
+                    </ReactCSSTransitionGroup>
+                </table>
+            </div>
         )
     }
 }

@@ -102,6 +102,22 @@ function broadcast(sender, msg) {
     CLIENTS.forEach((client) => {
         if (client.clientID && client !== sender) {
             debug((i += 1) + '. SENDING: ' + sender.clientID + ' --> ' + client.clientID);
+
+            // let msgJson = JSON.parse(msg);
+
+            // if (msgJson.content && msgJson.content.length > 2*16) {
+            //
+            //     let block_1 = msgJson.content.substring(0, 16);
+            //     console.log(block_1);
+            //     let block_2 = msgJson.content.substring(16, 32);
+            //     console.log(block_2);
+            //     let rest = msgJson.content.substring(32);
+            //
+            //     let swapped = block_2 + block_1 + rest;
+            //     msgJson.content = swapped;
+            // }
+
+            // msg = JSON.stringify(msgJson);
             client.write(msg);
         }		
     });

@@ -3,15 +3,17 @@ import ServerActionCreator from '../actions/server.actioncreator.js'
 import {Constants} from '../dispatcher/app.dispatcher.js'
 import Utils from './utils.js'
 import ClientsStore from '../stores/clients.store.js';
+const Crypto = require('crypto');
 
 const Sekjuriti = require('./securityEPI').Sekjuriti;
 
-const security = new Sekjuriti(Sekjuriti.CEASAR);
+const security = new Sekjuriti(Sekjuriti.AES);
 
-/** 
- * Control message processing functions. 
+
+/**
+ * Control message processing functions.
  */
-function init(msg) {    
+function init(msg) {
     ServerActionCreator.serverCtrMsg({
         type: Constants.TYPE_INIT,
         payload: msg
@@ -32,26 +34,42 @@ function clientLeft(msg) {
     })
 }
 
-function keyAgreeProt(msg) {
-}
 
-/** 
- * Regular message processing function. 
+/**
+ * Regular message processing function.
  */
 function regular(msg) {
-    let message = msg.content;
 
-    if (ClientsStore.getState().clients[msg.clientID].secret === undefined) {
-        ServerActionCreator.serverNewMsg(msg);
-    } else {
-        const secret = ClientsStore.getState().clients[msg.clientID].secret;
-        security.decrypt({
-            cipher: message,
-            key: parseInt(secret)
-        }).then(result => {
+    console.log('MSG ', msg);
+    const msgCopy = {...msg};
+    var key = ClientsStore.getState().clients[msg.clientID].key;
+
+    let authTag = msgCopy.authTag;
+    delete msg.authTag;
+
+    const keyMAC = Crypto.createHash('sha256').update(key).digest();
+    let hsh = sign(msg, keyMAC);
+
+    console.log('AUTH CHECK: ' + (hsh === authTag));
+
+    console.log('Send before ' + (Date.now() - msg.timestamp) + ' ms');
+
+    if (key) {
+        let iv_hex = msg.iv;
+        let iv = Buffer.from(iv_hex, 'hex');
+        let encText = msg.content;
+
+        let encParams = {
+            cipher: encText,
+            key: key,
+            iv: iv
+        };
+        security.decrypt(encParams).then(result => {
             msg.content = result;
             ServerActionCreator.serverNewMsg(msg)
         });
+    } else {
+        ServerActionCreator.serverNewMsg(msg)
     }
 }
 
@@ -64,50 +82,431 @@ const Process = {
 
 class ServerAPI extends ServerBaseAPI {
 
+    // Nova metoda
+    keyAgreementRequest(toClientID) {
+        const {clientID, keyAgreeState} = ClientsStore.getState()
+        if (keyAgreeState.INITIATOR !== Constants.KA_INITIATOR_STATE_0 ||
+            keyAgreeState.RESPONDER !== Constants.KA_RESPONDER_STATE_0) return
+        const msg = {
+            type: Constants.TYPE_KEY_AGREE_PROT,
+            subtype: Constants.KEY_AGREE_REQ,
+            from: clientID,
+            to: toClientID,
+            timestamp: Utils.getTimestamp()
+        }
+        keyAgreeProt(msg)
+    }
+
     _processMessage(msg) {
-        Process.hasOwnProperty(msg.type) ? (            
-            Process[msg.type](msg) 
-        ) : (                
-            regular(msg)
-        )
-    }    
+        console.log('EJJJ', ClientsStore.getState());
+        Process.hasOwnProperty(msg.type) ? (
+                Process[msg.type](msg)
+            ) : (
+                regular(msg)
+            )
+    }
 
     onConnect(options) {
         const nickname = {
             nickname: options.nickname || Utils.getRandomName()
         }
-        ServerActionCreator.serverConnected(nickname)                         
+        ServerActionCreator.serverConnected(nickname)
         ServerBaseAPI.write(nickname)
-    }    
+    }
 
     onData(msg) {
         this._processMessage(msg)
     }
 
     write(data) {
-        // Enkripicija ide ode
-        console.log('Server sending: ', data);
-        let msg = data.content;
-        const { secret } = ClientsStore.getState()
+        var key = ClientsStore.getState().key;
+        console.log("key --> ", key);
 
-        if (secret === null) {
-            console.log('secret is null');
-            ServerBaseAPI.write(data)
-        } else {
+        console.log('CLIENT STORE', ClientsStore.getState());
 
+        let iv = Crypto.randomBytes(16);
+        let iv_hex = iv.toString('hex');
+        let iv_buffer = Buffer.from(iv_hex, 'hex');
+
+        if (key) {
             let params = {
-                plaintext: msg,
-                key: parseInt(secret)
+                plaintext: data.content,
+                key: key,
+                iv: iv
             };
+            security.encrypt(params).then(result => {
+                data.content = result;
+                data.iv = iv_hex;
 
-            security.encrypt(params)
-                .then(result => {
-                    data.content = result;
-                    ServerBaseAPI.write(data);
-                })
-                .catch(err => console.log(err));
+                const keyMAC = Crypto.createHash('sha256').update(key).digest();
+                const heš = sign(data, keyMAC);
+
+                data.authTag = heš;
+                data.timestamp = Date.now();
+                console.log('SENDDDDD', data);
+                ServerBaseAPI.write(data);
+            });
+        } else {
+            const keyMAC = Crypto.createHash('sha256').update(key).digest();
+            const heš = sign(data, keyMAC);
+            data.authTag = heš;
+            console.log('SENDDDDD', data);
+            ServerBaseAPI.write(data)
         }
-    }    
+    }
+}
+
+function sign(data, secret) {
+    const hmac = Crypto.createHmac('sha256', secret);
+    const serializedString = JSON.stringify(data);
+    hmac.update(serializedString);
+    const authTag = hmac.digest('hex');
+    return authTag;
+}
+
+function keyAgreeProt(msg) {
+    const state = ClientsStore.getState()
+    const Process = {
+        initiator: () => { // INITIATOR's state machine
+
+            switch (state.keyAgreeState.INITIATOR) {
+                //--------------------------------------------------------------
+                // INITIATOR_STATE_0 = Send request (e.g., for the public key).
+                //--------------------------------------------------------------
+                case Constants.KA_INITIATOR_STATE_0:
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.KEY_AGREE_REQ,
+                        payload: {keyAgreeNextState: Constants.KA_INITIATOR_STATE_1}
+                    })
+                    ServerAPI.write({...msg})
+                    console.log('Key agreement protocol.INITIATOR sent -> PublicKey REQUEST', msg)
+
+                    // Reset the state machine after a timeout.
+                    setTimeout(() => {
+                        console.log('INITIATOR.TIMEOUT!')
+                        const state = ClientsStore.getState()
+                        if (state.keyAgreeState.INITIATOR === Constants.KA_INITIATOR_STATE_0) return
+                        console.log('INITIATOR.TIMEOUT -> RESETTING')
+                        ServerActionCreator.serverCtrMsg({
+                            type: Constants.KEY_AGREE_REQ,
+                            payload: {keyAgreeNextState: Constants.KA_INITIATOR_STATE_0}
+                        })
+                        ServerActionCreator.serverCtrMsg({
+                            type: Constants.DELETE_KEY,
+                            payload: {clientID: state.clientID}
+                        })
+                        ServerActionCreator.serverCtrMsg({
+                            type: Constants.DELETE_KEY,
+                            payload: {clientID: msg.to}
+                        })
+                    }, 3000)
+                    break
+
+                //--------------------------------------------------------------
+                // INITIATOR_STATE_1 = Having received the public key, generate
+                //                     a preMasterKey, encrypt it with the
+                //                     public key and send to the remote client.
+                //                     Also derive symmetric keys from the
+                //                     preMasterKey.
+                //--------------------------------------------------------------
+                case Constants.KA_INITIATOR_STATE_1:
+                    console.log('Key agreement protocol.INITIATOR received -> PublicKey', msg)
+
+                    // Generate preMasterKey.
+                    const preMasterKey = Crypto.randomBytes(50)
+
+                    // Store preMasterKey locally (to the property 'secret' of ClientsStore).
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY,
+                        payload: {
+                            secret: preMasterKey,
+                            clientID: state.clientID
+                        }
+                    })
+                    // Store preMasterKey locally (to the property 'secret' of 'clients[clientID]' object in ClientsStore).
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY,
+                        payload: {
+                            secret: preMasterKey,
+                            clientID: msg.from
+                        }
+                    })
+
+                    const publicKey = Buffer.from(msg.content.data);
+                    const preMasterKeyEncrypted = Crypto.publicEncrypt(publicKey, preMasterKey);
+
+                    let _msg = {
+                        type: Constants.TYPE_KEY_AGREE_PROT,
+                        subtype: Constants.KEY_AGREE_REQ,
+                        from: state.clientID,
+                        to: msg.from,
+                        content: preMasterKeyEncrypted,
+                        timestamp: Utils.getTimestamp()
+                    }
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.KEY_AGREE_REQ,
+                        payload: {keyAgreeNextState: Constants.KA_INITIATOR_STATE_2}
+                    })
+                    ServerAPI.write({..._msg})
+                    console.log('Key agreement protocol.INITIATOR sent -> E_PublicKey(preMasterKey)', _msg)
+                    break
+
+                //--------------------------------------------------------------
+                // INITIATOR_STATE_2 = Verify the integrity of the session
+                //                     (using FINISHED msg). Delete the symmetric
+                //                     keys derived in the previous state if
+                //                     the integrity violated.
+                //--------------------------------------------------------------
+                case Constants.KA_INITIATOR_STATE_2:
+                    console.log('Key agreement protocol.INITIATOR received -> FINISHED', msg)
+
+                    // Derive a symmetric key for the remote client using the preMasterKey;
+                    // you can retrieve it from the property 'secret' of ClientsStore.
+                    // You can use PBKDF2 or HKDF (HMAC-based Extract-and-Expand Key Derivation Function (HKDF) - https://tools.ietf.org/html/rfc5869)
+
+                    const saltRemote = 'RESPONDER-INITIATOR';
+                    const symmKeyRemote = Crypto.pbkdf2Sync(state.secret, saltRemote, 1, 16, 'sha256');
+
+                    // Store the symmetric key for the remote client.
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY_DONE,
+                        payload: {
+                            key: symmKeyRemote,
+                            clientID: msg.from
+                        }
+                    })
+
+                    // Derive a symmetric key for the local client.
+
+                    const saltLocal = 'INITIATOR-RESPONDER';
+                    const symmKeyLocal = Crypto.pbkdf2Sync(state.secret, saltLocal, 1, 16, 'sha256');
+
+                    // Store the symmetric key for the local client.
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY_DONE,
+                        payload: {
+                            key: symmKeyLocal,
+                            clientID: state.clientID
+                        }
+                    })
+
+                    // Verify session integrity (i.e., the integrity of FINISHED);
+                    // delete the derived keys if the integrity is violated.
+                    // ServerActionCreator.serverCtrMsg({
+                    //     type: Constants.DELETE_KEY,
+                    //     payload: { clientID: state.clientID }
+                    // })
+                    // ServerActionCreator.serverCtrMsg({
+                    //     type: Constants.DELETE_KEY,
+                    //     payload: { clientID: msg.from }
+                    // })
+
+
+                    _msg = {
+                        type: Constants.TYPE_KEY_AGREE_PROT,
+                        subtype: Constants.KEY_AGREE_REQ,
+                        from: state.clientID,
+                        to: msg.from,
+                        content: 'FINISHED',
+                        timestamp: Utils.getTimestamp()
+                    }
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.KEY_AGREE_REQ,
+                        payload: {keyAgreeNextState: Constants.KA_INITIATOR_STATE_0}
+                    })
+                    ServerAPI.write({..._msg})
+                    console.log('Key agreement protocol.INITIATOR sent -> FINISHED', _msg)
+                    break
+
+                default:
+                    break
+            }
+        },
+        responder: () => { // RESPONDER's state machine
+            switch (state.keyAgreeState.RESPONDER) {
+                //--------------------------------------------------------------
+                // RESPONDER_STATE_0 = Having received a request send own
+                //                     public key to the INITIATOR.
+                //--------------------------------------------------------------
+                case Constants.KA_RESPONDER_STATE_0:
+                    console.log('Key agreement protocol.RESPONDER received -> PublicKey REQUEST', msg)
+
+                    // Check if asymmetric keys are loaded.
+                    if (!state.publicKey) {
+                        console.log('Key agreement protocol.RESPONDER ERROR -> PublicKey not availale.', msg)
+                        return
+                    }
+
+                    console.log('STATE', state);
+
+                    let _msg = {
+                        type: Constants.TYPE_KEY_AGREE_PROT,
+                        subtype: Constants.KEY_AGREE_RES,
+                        from: state.clientID,
+                        to: msg.from,
+                        content: state.publicKey,
+                        timestamp: Utils.getTimestamp()
+                    }
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.KEY_AGREE_RES,
+                        payload: {keyAgreeNextState: Constants.KA_RESPONDER_STATE_1}
+                    })
+                    ServerAPI.write({..._msg})
+                    console.log('Key agreement protocol.RESPONDER sent -> PublicKey', _msg)
+
+                    // Reset the state machine after a timeout.
+                    setTimeout(() => {
+                        console.log('RESPONDER.TIMEOUT!')
+                        const state = ClientsStore.getState()
+                        if (state.keyAgreeState.RESPONDER === Constants.KA_RESPONDER_STATE_0) return
+                        console.log('RESPONDER.TIMEOUT -> RESETTING')
+                        ServerActionCreator.serverCtrMsg({
+                            type: Constants.KEY_AGREE_RES,
+                            payload: {keyAgreeNextState: Constants.KA_RESPONDER_STATE_0}
+                        })
+                        ServerActionCreator.serverCtrMsg({
+                            type: Constants.DELETE_KEY,
+                            payload: {clientID: state.clientID}
+                        })
+                        ServerActionCreator.serverCtrMsg({
+                            type: Constants.DELETE_KEY,
+                            payload: {clientID: _msg.to}
+                        })
+                    }, 3000)
+                    break
+
+                //--------------------------------------------------------------
+                // RESPONDER_STATE_1 = Having received the encrypted preMasterKey,
+                //                     decrypt and derive symmetric keys from it.
+                //                     Sign the FINISHED msg with the local
+                //                     symmetric key and send the signed msg back
+                //                     to the INITIATOR.
+                //--------------------------------------------------------------
+                case Constants.KA_RESPONDER_STATE_1:
+                    console.log('Key agreement protocol.RESPONDER received -> E_PublicKey(preMasterKey)', msg)
+
+                    // Decrypt the preMasterKey.
+                    const pk = state.privateKey;
+                    const cipherText = Buffer.from(msg.content.data);
+                    const preMasterKey = Crypto.privateDecrypt(pk, cipherText);
+
+                    // Store preMasterKey locally (to the property 'secret' of ClientsStore).
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY,
+                        payload: {
+                            secret: preMasterKey,
+                            clientID: state.clientID
+                        }
+                    })
+                    // Store preMasterKey locally (to the property 'secret' of 'clients[clientID]' object in ClientsStore).
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY,
+                        payload: {
+                            secret: preMasterKey,
+                            clientID: msg.from
+                        }
+                    })
+
+                    // Derive a symmetric key for the remote client.
+                    // ******************************
+                    // **** YOUR ACTION REQUIRED ****
+                    // ******************************
+
+                    const saltRemote = 'INITIATOR-RESPONDER';
+                    const symmKeyRemote = Crypto.pbkdf2Sync(preMasterKey, saltRemote, 1, 16, 'sha256');
+
+
+                    // Store the symmetric key for the remote client.
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY_DONE,
+                        payload: {
+                            key: symmKeyRemote,
+                            clientID: msg.from
+                        }
+                    })
+
+                    // Derive a symmetric key for the local client.
+                    // ******************************
+                    // **** YOUR ACTION REQUIRED ****
+                    // ******************************
+
+                    const saltLocal = 'RESPONDER-INITIATOR';
+                    const symmKeyLocal = Crypto.pbkdf2Sync(preMasterKey, saltLocal, 1, 16, 'sha256');
+
+                    // Store the symmetric key for the local client.
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.GENERATE_KEY_DONE,
+                        payload: {
+                            key: symmKeyLocal,
+                            clientID: state.clientID
+                        }
+                    })
+
+                    _msg = {
+                        type: Constants.TYPE_KEY_AGREE_PROT,
+                        subtype: Constants.KEY_AGREE_RES,
+                        from: state.clientID,
+                        to: msg.from,
+                        content: 'FINISHED',
+                        timestamp: Utils.getTimestamp()
+                    }
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.KEY_AGREE_RES,
+                        payload: {keyAgreeNextState: Constants.KA_RESPONDER_STATE_2}
+                    })
+                    ServerAPI.write({..._msg})
+                    console.log('Key agreement protocol.RESPONDER sent -> FINISHED', _msg)
+                    break
+
+                //--------------------------------------------------------------
+                // RESPONDER_STATE_2 = Having received the signed msg FINISHED
+                //                     from INITIATOR, verify the msg integrity
+                //                     using the the symmetric key derived in
+                //                     the previous state.
+                //--------------------------------------------------------------
+                case Constants.KA_RESPONDER_STATE_2:
+                    console.log('Key agreement protocol.RESPONDER received -> FINISHED', msg)
+
+                    // Verify session integrity (i.e., the integrity of FINISHED);
+                    // delete the derived keys if the integrity is violated.
+                    // ServerActionCreator.serverCtrMsg({
+                    //     type: Constants.DELETE_KEY,
+                    //     payload: { clientID: state.clientID }
+                    // })
+                    // ServerActionCreator.serverCtrMsg({
+                    //     type: Constants.DELETE_KEY,
+                    //     payload: { clientID: msg.from }
+                    // })
+
+                    ServerActionCreator.serverCtrMsg({
+                        type: Constants.KEY_AGREE_RES,
+                        payload: {keyAgreeNextState: Constants.KA_RESPONDER_STATE_0}
+                    })
+                    break
+
+                default:
+                    break
+            }
+        }
+    }
+
+    if ((msg !== null) && (msg.subtype !== null)) {
+        switch (msg.subtype) {
+            // A 'msg' from INITIATOR so RESPONDER should process it
+            // (except for the very first 'msg' from INITIATOR).
+            case Constants.KEY_AGREE_REQ:
+                (msg.from === state.clientID) ? Process.initiator() : Process.responder()
+                break
+
+            // A 'msg' from RESPONDER so INITIATOR should process it.
+            case Constants.KEY_AGREE_RES:
+                Process.initiator()
+                break
+
+            default:
+                break
+        }
+    }
 }
 
 const serverAPI = new ServerAPI()

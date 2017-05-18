@@ -7,20 +7,19 @@ import MsgStore from '../stores/msg.store.js'
 import Utils from '../utils/utils.js'
 import {ipcRenderer as ipc} from 'electron'
 
-
 const Hamburger = (props) => {
     const { toggleClientsBoard } = props
     return (
-        <div className="cns-container -align-center hamburger" 
-            onClick={toggleClientsBoard}>
+        <div className="cns-container -align-center hamburger"
+             onClick={toggleClientsBoard}>
             <div className="icon">
                 <span/>
             </div>
             <div className="label">
                 <span>Clients board</span>
             </div>
-        </div>  
-    )  
+        </div>
+    )
 }
 
 const Welcome = (props) => {
@@ -29,21 +28,21 @@ const Welcome = (props) => {
         <div className="cns-container -align-center">
             <div className="chat"/>
             <div>Hello <span className="nickname">{nickname}</span></div>
-            <div className="active" 
-                onClick={toggleClientsBoard}> 
+            <div className="active"
+                 onClick={toggleClientsBoard}>
                 users online: {Object.keys(clients).length + 1}
-            </div>                
-        </div>  
-    )    
+            </div>
+        </div>
+    )
 }
 
 const Header = (props) => {
     const { toggleClientsBoard } = props
-    return (        
+    return (
         <header className="cns-container -justify-between -align-center header">
             <Hamburger toggleClientsBoard={toggleClientsBoard}/>
-            <Welcome props={props}/>    
-        </header>            
+            <Welcome props={props}/>
+        </header>
     )
 }
 
@@ -61,7 +60,7 @@ class MainPage extends Component {
             clients: {},
             clientsBoard: false}
 
-        this._onClientsStoreChange = this._onClientsStoreChange.bind(this)            
+        this._onClientsStoreChange = this._onClientsStoreChange.bind(this)
         this._onMsgStoreChange = this._onMsgStoreChange.bind(this)
         this._handleSendMsg = this._handleSendMsg.bind(this)
         this._handleGenerateKey = this._handleGenerateKey.bind(this)
@@ -72,23 +71,23 @@ class MainPage extends Component {
 
     _onClientsStoreChange() {
         const state = ClientsStore.getState()
-        this.setState(state)  
-        console.log('MainPage.ClientsStore state ->', this.state)            
+        this.setState(state)
     }
 
     _onMsgStoreChange() {
         const state = MsgStore.getState()
-        this.setState(state)  
-        console.log('MainPage.MsgStore state ->', this.state)           
-    }        
+        this.setState(state)
+    }
 
     _handleSendMsg(msg) {
         const { nickname, clientID } = this.state
+
         const _msg = {
             clientID: clientID,
-            nickname: nickname,            
+            nickname: nickname,
             timestamp: Utils.getTimestamp(),
-            content: msg}        
+            content: msg
+        }
         UIActionCreator.sendMsg(_msg)
     }
 
@@ -106,64 +105,64 @@ class MainPage extends Component {
         UIActionCreator.deleteKey(params)
     }
 
-    _handleLoadKeys(clientID) {        
+    _handleLoadKeys(clientID) {
         UIActionCreator.loadAsymmKeys()
     }
 
-    _handleSendRequest(clientID) {
-        console.log('Send Request To ->', clientID) // TBD
-    }    
+    _handleSendRequest(toClientID) {
+        UIActionCreator.keyAgreementRequest(toClientID)
+    }
 
     _toggleClientsBoard() {
-        const { clientsBoard } = this.state 
+        const { clientsBoard } = this.state
         this.setState({
-            clientsBoard: !clientsBoard})    
+            clientsBoard: !clientsBoard})
     }
 
     componentWillMount() {
-        ClientsStore.addChangeListener(this._onClientsStoreChange)         
-        MsgStore.addChangeListener(this._onMsgStoreChange)      
+        ClientsStore.addChangeListener(this._onClientsStoreChange)
+        MsgStore.addChangeListener(this._onMsgStoreChange)
     }
 
     componentWillUnmount() {
-        ClientsStore.removeChangeListener(this._onClientsStoreChange)        
-        MsgStore.removeChangeListener(this._onMsgStoreChange)                         
+        ClientsStore.removeChangeListener(this._onClientsStoreChange)
+        MsgStore.removeChangeListener(this._onMsgStoreChange)
     }
 
     render() {
         const { title } = this.props
-        const { messages, clientID, key, publicKey, clients } = this.state        
+        const { messages, clientID, key, publicKey, clients } = this.state
         const { nickname } = this.props
         return (
             <div className="main-page">
                 <div className="cns-page -space">
-                    <div className="cns-container">                    
-                        <Header 
+                    <div className="cns-container">
+                        <Header
                             title={title}
                             nickname={nickname}
                             clients={clients}
                             toggleClientsBoard={this._toggleClientsBoard}/>
-                        
+
                         <MsgBoard
                             clientID={clientID}
                             messages={messages}
-                            handleSendMsg={this._handleSendMsg}/>            
-                    </div>                            
-                </div>    
-                <div className="cns-page -absolute">                   
-                    <ClientsBoard                     
+                            handleSendMsg={this._handleSendMsg}/>
+                    </div>
+                </div>
+                <div className="cns-page -absolute">
+                    <ClientsBoard
                         show={this.state.clientsBoard}
                         clientID={clientID}
                         nickname={nickname}
                         localClientKey={key}
                         publicKey={publicKey}
-                        clients={[clients]}               
+                        clients={[clients]}
                         onGenerateKey={this._handleGenerateKey}
                         onLoadKeys={this._handleLoadKeys}
                         onSendRequest={this._handleSendRequest}
-                        onToggle={this._toggleClientsBoard}/>            
+                        onToggle={this._toggleClientsBoard}/>
                 </div>
-            </div>                    
+            </div>
         )
     }
 }
